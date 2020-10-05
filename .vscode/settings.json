@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "vector": "c",
+        "memory": "c",
+        "system_error": "c",
+        "memory_resource": "c",
+        "*.tcc": "c",
+        "string": "c",
+        "array": "c"
+    }
+}
