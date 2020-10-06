@@ -16,6 +16,7 @@ void prompt(){
         // We fetch the operation token and its data.
         char* operation = strtok(cmd, " ");
         char* data = strtok(NULL, "\n");
+        char* diff_operation = strtok(cmd, "\n"); // for those that don't have arguments. (count, exit)
 
         if(!strcmp(operation, "i")){
             insert(data);
@@ -38,13 +39,13 @@ void prompt(){
         else if(!strcmp(operation, "m")){
             minimum(data);
         }
-        else if(!strcmp(operation, "c")){
+        else if(!strcmp(diff_operation, "c")){
             count(data);
         }
         else if(!strcmp(operation, "p")){
             postal(data);
         }
-        else if(!strcmp(operation, "exit")){
+        else if(!strcmp(diff_operation, "exit")){
             exit_program();
         }
         else{
@@ -55,5 +56,3 @@ void prompt(){
 
     }while(strcmp(cmd, "exit"));
 }
-
-

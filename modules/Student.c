@@ -5,19 +5,20 @@ Student Student_create(char* given_line){
 
     char delim[2] = " ";
 
-    char* id = strdup(strtok(given_line, delim));
-    char* first_name = strdup(strtok(NULL, delim));
-    char* last_name = strdup(strtok(NULL, delim));
-    int zip = atoi(strtok(NULL, delim));
-    int year = atoi(strtok(NULL, delim));
-    float gpa = atof(strtok(NULL, delim));
+    char* id = strtok(given_line, delim);
+    char* first_name = strtok(NULL, delim);
+    char* last_name = strtok(NULL, delim);
+    char* zip = strtok(NULL, delim);
+    char* year = strtok(NULL, delim);
+    char* gpa = strtok(NULL, delim);
 
-    // If we are given something that we don't expect,
+    // If user hasn't given us some information, we abort operation.
     if(id == NULL || first_name == NULL || last_name == NULL 
-    || zip == 0 || year == 0 ){ // gpa can be 0.0 so we don't include it.
+    || zip == NULL || year == NULL || gpa == NULL){
         // we return NULL.
         return NULL;
     }
+
 
     // Else, we create the Student.
     Student S = malloc(sizeof(struct student));
@@ -26,12 +27,23 @@ Student Student_create(char* given_line){
         assert(0);
     }
 
-    S->student_id = id;
-    S->first_name = first_name;
-    S->last_name = last_name;
-    S->zip = zip;
-    S->year = year;
-    S->gpa = gpa;
+    S->student_id = strdup(id);
+    S->first_name = strdup(first_name);
+    S->last_name = strdup(last_name);
+    S->zip = atoi(zip);
+    S->year = atoi(year);
+    S->gpa = atof(gpa);
+
+    // If we are given something that we don't expect,
+    if(S->student_id == NULL || S->first_name == NULL || S->last_name == NULL 
+    || S->zip == 0 || S->year == 0 || S->gpa < 0.0){
+        free(S->student_id);
+        free(S->first_name);
+        free(S->last_name);
+        free(S);
+        // we return NULL.
+        return NULL;
+    }
 
     return S;
 }

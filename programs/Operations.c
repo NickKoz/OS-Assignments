@@ -230,7 +230,7 @@ void count(char* data){
 
 
 
-
+// Auxiliary struct for postal function.
 typedef struct ZipInfo{
 
     int zipcode;
@@ -238,7 +238,7 @@ typedef struct ZipInfo{
 
 }ZipInfo;
 
-
+// Auxiliary compare function for ZipInfo structures.
 int cmp_zipcodes(const void* p1, const void* p2){
 
     ZipInfo* z1 = *(ZipInfo**)p1;
@@ -250,15 +250,23 @@ int cmp_zipcodes(const void* p1, const void* p2){
 
 void postal(char* data){
 
-    int rank = atoi(strtok(data, "\n"));
+    int rank;
 
+    data = strtok(data, "\n");
+    if(data != NULL){
+        rank = atoi(data);
+    }
+    else{
+        rank = 0;
+    }
+    // If user hasn't given a valid rank, we print an error message.
     if(rank == 0 || rank < 0){
         printf("Wrong rank selection!Please try again.\n");
         return;
     }
 
     LList buckets_with_years = InvIndex_get_buckets(each_year_students);
-
+    // If there are no students' records, we can't do anything.
     if(LL_is_empty(buckets_with_years)){
         printf("No students are enrolled\n\n");
         return;
@@ -266,17 +274,18 @@ void postal(char* data){
 
     int number_of_students = HT_count(students);
     
+    // Array with pairs of zipcode and number of students that has it.
     ZipInfo* zip_struct[number_of_students];
-
+    // Initializing the array...
     for(int i = 0 ; i < number_of_students ; i++){
         zip_struct[i] = malloc(sizeof(ZipInfo));
         zip_struct[i]->zipcode = -1;
         zip_struct[i]->num_of_students = 0;
     }
 
-    int number_of_zipcodes = 0;
-
-    int zip_end_index = 0;
+    // For every student in the structure, we keep their zip if only we haven't kept it already.
+    int number_of_zipcodes = 0; // we count the different zipcodes that there are in the structure.
+    int zip_end_index = 0; // index for last zipcode in array.
     for(LLNode temp = LL_first(buckets_with_years) ; temp != NULL ; temp = LLNode_next(temp)){
 
         InvIndexNode header_bucket = LLNode_get_data(temp);
@@ -286,12 +295,14 @@ void postal(char* data){
             Student S = LLNode_get_data(temp_stud);
             bool found = false;
             for(int i = 0 ; i < zip_end_index ; i++){
+                // If we found a zip that is already in array, we just count one more student for it.
                 if(S->zip == zip_struct[i]->zipcode){
                     zip_struct[i]->num_of_students++;
                     found = true;
                     break;
                 }
             }
+            // Else, if we didn't find it, we add it to the end of the array.
             if(!found){
                 number_of_zipcodes++;
                 zip_struct[zip_end_index]->num_of_students++;
@@ -300,32 +311,48 @@ void postal(char* data){
         }
     }
 
-
+    // In case that given rank is bigger than the zipcodes found, we should abort the operation.
     if(rank > number_of_zipcodes){
         printf("Wrong rank selection!Please try again.\n");
+        // Freeing up memory allocated for zipcodes.
+        for(int i = 0 ; i < number_of_students ; i++){
+            free(zip_struct[i]);
+        }
         return;
     }
-    
+
+    // Sorting the zip array by the number of students in order to have it in descending order.
     qsort(zip_struct, number_of_students, sizeof(ZipInfo*), cmp_zipcodes);
 
-    int curr_zip = zip_struct[0]->zipcode;
-    for(int i = 1 ; i < number_of_zipcodes + 1 ; i++){
-        if(rank == 1)
-            printf("%d ", curr_zip);
-
-        if(zip_struct[i]->zipcode != curr_zip){
-            if(rank > 1){
-                curr_zip = zip_struct[i]->zipcode;
-                rank--;
-            }
-            else if(rank == 1){
-                break;
-            }
+    // Printing zipcode(s) by given rank.
+    int curr_num_of_students = zip_struct[0]->num_of_students;
+    int temp_rank = rank;
+    for(int i = 0 ; i < number_of_zipcodes ; i++){
+        if(temp_rank == 1){
+            printf("%d ", zip_struct[i]->zipcode);
         }
+        else if(temp_rank == 0){
+            break;
+        }
+        
+        if(curr_num_of_students != zip_struct[i+1]->num_of_students){
+            temp_rank--;
+        }
+
+        curr_num_of_students = zip_struct[i+1]->num_of_students;
     }
 
-    printf("is/are %d most popular.\n", rank);
+    if(rank == 1)
+        printf("is/are %dst most popular.\n", rank);
+    else if(rank == 2)
+        printf("is/are %dnd most popular.\n", rank);
+    else if(rank == 3)
+        printf("is/are %drd most popular.\n", rank);
+    else
+        printf("is/are %dth most popular.\n", rank);
+    
 
+    // Freeing up memory allocated for zipcodes.
     for(int i = 0 ; i < number_of_students ; i++){
         free(zip_struct[i]);
     }
