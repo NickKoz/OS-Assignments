@@ -7,6 +7,8 @@
 #include "Student.h"
 #include "Operations.h"
 
+#define SIZE_OF_KEY sizeof(int*)
+
 #define STRING_DEFAULT 255
 
 #define HASH_TABLE_DEFAULT_SIZE 50 // default size of hash table if not given.

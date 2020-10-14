@@ -14,14 +14,18 @@ struct InvertedIndexNode{
 };
 
 // Creates and returns a bucket with the given key.
-InvIndexNode InvIndexNode_create(InvIndexKey key){
+InvIndexNode InvIndexNode_create(InvIndexKey key, size_t size_of_key){
 
     InvIndexNode IINode = malloc(sizeof(struct InvertedIndexNode));
     if(IINode == NULL){
         printf("Memory error!\n");
         assert(0);
     }
-    IINode->key = key;
+    
+    // We need key to be stored dynamically.
+    IINode->key = malloc(sizeof(size_of_key));
+    memcpy(IINode->key, key, size_of_key);
+
     IINode->data = LL_create(NULL); // Destroy function is NULL because we just store references of objects.
 
     return IINode;
@@ -49,6 +53,7 @@ void InvIndexNode_destroy(Pointer p){
 
     InvIndexNode IINode = p;
 
+    free(IINode->key);
     LL_destroy(IINode->data);
 
     free(IINode);
@@ -102,11 +107,11 @@ static int compare_indexes(Pointer p1, Pointer p2){
 }
 
 
-// Inserts item by key in structure.
-void InvIndex_insert(InvIndex I, InvIndexKey key, InvIndexItem item){
+// Inserts item by key in structure. Size of key is given.
+void InvIndex_insert(InvIndex I, InvIndexKey key, size_t size_of_key, InvIndexItem item){
 
     // Temporary bucket in order to search for key in buckets' list.
-    InvIndexNode tempBucket = InvIndexNode_create(key);
+    InvIndexNode tempBucket = InvIndexNode_create(key, size_of_key);
 
     LLNode header_bucket = LL_find(I->buckets, tempBucket, I->compare);
     // If bucket with given key doesn't exist, we add it to our buckets' collection.
@@ -131,11 +136,11 @@ void InvIndex_insert(InvIndex I, InvIndexKey key, InvIndexItem item){
 
 
 
-// Removes item with key from the structure. Returns true if item is removed or false if not.
-void InvIndex_delete(InvIndex I, InvIndexKey key, InvIndexItem item){
+// Removes item with key and its size from the structure. Returns true if item is removed or false if not.
+void InvIndex_delete(InvIndex I, InvIndexKey key, size_t size_of_key, InvIndexItem item){
 
     // Temporary bucket in order to search for key in buckets' list.
-    InvIndexNode tempBucket = InvIndexNode_create(key);
+    InvIndexNode tempBucket = InvIndexNode_create(key, size_of_key);
 
     LLNode header_bucket = LL_find(I->buckets, tempBucket, I->compare);
 
@@ -156,17 +161,17 @@ void InvIndex_delete(InvIndex I, InvIndexKey key, InvIndexItem item){
 
     // If the bucket is empty after deleting item, we remove it from the structure
     // for space economy.
-    if(LL_size(bucket->data) == 0)
+    if(LL_is_empty(bucket->data))
         LL_delete(I->buckets, header_bucket);
 
 }
 
 
-// Finds bucket with given key and returns it. Returns NULL if it doesn't exist.
-LList InvIndex_find(InvIndex I, InvIndexKey key){
+// Finds node of structure with given key and its size and returns it. Returns NULL if it doesn't exist.
+InvIndexNode InvIndex_find(InvIndex I, InvIndexKey key, size_t size_of_key){
 
     // Temporary bucket in order to search for key in buckets' list.
-    InvIndexNode tempBucket = InvIndexNode_create(key);
+    InvIndexNode tempBucket = InvIndexNode_create(key, size_of_key);
 
     LLNode header_bucket = LL_find(I->buckets, tempBucket, I->compare);
 
@@ -175,7 +180,7 @@ LList InvIndex_find(InvIndex I, InvIndexKey key){
 
     InvIndexNode_destroy(tempBucket);
 
-    return InvIndexNode_get_data(LLNode_get_data(header_bucket));   
+    return (InvIndexNode)LLNode_get_data(header_bucket);   
 }
 
 

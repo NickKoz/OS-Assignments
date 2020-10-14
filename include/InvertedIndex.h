@@ -18,9 +18,9 @@ LList InvIndexNode_get_data(InvIndexNode);
 
 InvIndex InvIndex_create(CompareFunc);
 LList InvIndex_get_buckets(InvIndex);
-void InvIndex_insert(InvIndex, InvIndexKey, InvIndexItem);
-void InvIndex_delete(InvIndex, InvIndexKey, InvIndexItem);
-LList InvIndex_find(InvIndex, InvIndexKey);
+void InvIndex_insert(InvIndex, InvIndexKey, size_t, InvIndexItem);
+void InvIndex_delete(InvIndex, InvIndexKey, size_t, InvIndexItem);
+InvIndexNode InvIndex_find(InvIndex, InvIndexKey, size_t);
 
 void InvIndex_visit(InvIndex, VisitFunc, VisitFunc);
 

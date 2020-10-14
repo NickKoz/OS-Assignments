@@ -94,30 +94,15 @@ HTable HT_create(int size_of_table , CompareFunc cfunc, HashFunc hfunc, DestroyF
 
 
 
-/*
-    * Inserts node into Hash Table with key and its data.
-    * In case that key already exists in hash table, we change its data.
-    * If it's necessary, we resize the table.
-*/
+// Inserts node into Hash Table with key and its data.
 void HT_insert(HTable H, HTKey key, HTItem item){
 
     HTEntry tempEntry = HTEntry_create(key, item);
 
     int h = H->hash(key) % H->size;
 
-    LLNode temp = LL_find(H->table[h], tempEntry, H->compare);
-
-    // If key doesn't exist, we add it to hash table.
-    if(temp == NULL){
-        LL_insert_front(H->table[h], tempEntry);
-        H->count++;
-    }
-    // Otherwise we update its data.
-    else{
-        HTEntry_set_data((HTEntry)LLNode_get_data(temp), item);
-        free(tempEntry);
-    }
-
+    LL_insert_front(H->table[h], tempEntry);
+    H->count++;
 }
 
 

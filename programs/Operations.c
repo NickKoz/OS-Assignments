@@ -15,8 +15,7 @@ void insert(char* data){
     }
 
     HT_insert(students, S->student_id, S);
-
-    InvIndex_insert(each_year_students, &S->year, S);
+    InvIndex_insert(each_year_students, &S->year, SIZE_OF_KEY, S);
 
     printf("Student is added to the system!\n");
 }
@@ -54,7 +53,7 @@ void delete(char* data){
 
     Student S = HTEntry_get_data(stud);
     // Else, we delete him from the system.
-    InvIndex_delete(each_year_students, &S->year, S);
+    InvIndex_delete(each_year_students, &S->year, SIZE_OF_KEY, S);
     HT_remove(students, S->student_id);
 
     printf("Student with ID: \'%s\' is removed!\n",  id);
@@ -70,14 +69,13 @@ void number(char* data){
         return;
     }
 
-    LList studs = InvIndex_find(each_year_students, &year);
-
+    InvIndexNode studs = InvIndex_find(each_year_students, &year, SIZE_OF_KEY);
     if(studs == NULL){
         printf("There are no students' records of year %d.\n", year);
         return;
     }
 
-    printf("Number of students in year %d : %d\n", year, LL_size(studs));
+    printf("Number of students in year %d : %d\n", year, LL_size(InvIndexNode_get_data(studs)));
 }
 
 
@@ -103,13 +101,15 @@ void top(char* data){
         return;
     }
     //Case that there is no bucket with students in given year.
-    LList studs = InvIndex_find(each_year_students, &year);
+    InvIndexNode studs = InvIndex_find(each_year_students, &year, SIZE_OF_KEY);
     if(studs == NULL){
         printf("There are no students' records of year %d.\n", year);
         return;
     }
 
-    int studs_found = LL_size(studs);
+    LList studs_bucket = InvIndexNode_get_data(studs);
+
+    int studs_found = LL_size(studs_bucket);
 
     // Case that user gives wrong values.
     if(stud_number > studs_found || stud_number <= 0){
@@ -120,7 +120,7 @@ void top(char* data){
     // Array with references to Students in order to sort them by their gpa.
     Student students_by_gpa[studs_found];
 
-    LLNode temp = LL_first(studs);
+    LLNode temp = LL_first(studs_bucket);
     for(int i = 0 ; i < studs_found ; i++){
         Student S = LLNode_get_data(temp);
         students_by_gpa[i] = S;
@@ -149,7 +149,7 @@ void average(char* data){
         return;
     }
 
-    LList studs = InvIndex_find(each_year_students, &year);
+    InvIndexNode studs = InvIndex_find(each_year_students, &year, SIZE_OF_KEY);
     if(studs == NULL){
         printf("There are no students' records of year %d.\n", year);
         return;
@@ -157,9 +157,10 @@ void average(char* data){
 
     float sum_of_gpas = 0.0;
 
-    int studs_found = LL_size(studs);
+    LList studs_bucket = InvIndexNode_get_data(studs);
 
-    for(LLNode temp = LL_first(studs) ; temp != NULL ; temp = LLNode_next(temp)){
+    int studs_found = LL_size(studs_bucket);    
+    for(LLNode temp = LL_first(studs_bucket) ; temp != NULL ; temp = LLNode_next(temp)){
         Student S = LLNode_get_data(temp);
         sum_of_gpas += S->gpa;
     }
@@ -179,14 +180,16 @@ void minimum(char* data){
         return;
     }
 
-    LList studs = InvIndex_find(each_year_students, &year);
+    InvIndexNode studs = InvIndex_find(each_year_students, &year, SIZE_OF_KEY);
     if(studs == NULL){
         printf("There are no students' records of year %d.\n", year);
         return;
     }
 
+    LList studs_bucket = InvIndexNode_get_data(studs);
+
     float min_gpa = 101.0;
-    for(LLNode temp = LL_first(studs) ; temp != NULL ; temp = LLNode_next(temp)){
+    for(LLNode temp = LL_first(studs_bucket) ; temp != NULL ; temp = LLNode_next(temp)){
         Student S = LLNode_get_data(temp);
         if(S->gpa < min_gpa){
             min_gpa = S->gpa;
@@ -195,7 +198,7 @@ void minimum(char* data){
     // Many students may have lowest GPA of given year.
     printf("Student/Students that had the lowest GPA is/are:\n\n");
     // So we print them all.
-    for(LLNode temp = LL_first(studs) ; temp != NULL ; temp = LLNode_next(temp)){
+    for(LLNode temp = LL_first(studs_bucket) ; temp != NULL ; temp = LLNode_next(temp)){
         Student S = LLNode_get_data(temp);
         if(S->gpa == min_gpa)
             Student_print(S);
@@ -219,7 +222,7 @@ void count(char* data){
 
         int year = *(int*)InvIndexNode_get_key(header_bucket);
         int students = LL_size(InvIndexNode_get_data(header_bucket));
-
+        // we print year and its enrolled students.
         printf("Year: %d  Students: %d\n", year, students);
     }
     printf("\nAll the other possible years don't have active students.\n\n");

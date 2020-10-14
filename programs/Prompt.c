@@ -18,6 +18,10 @@ void prompt(){
         char* data = strtok(NULL, "\n");
         char* diff_operation = strtok(cmd, "\n"); // for those that don't have arguments. (count, exit)
 
+        if(!strcmp(operation, "\n"))
+            continue;
+
+
         if(!strcmp(operation, "i")){
             insert(data);
         }
@@ -55,4 +59,5 @@ void prompt(){
         printf("\n");
 
     }while(strcmp(cmd, "exit"));
+    
 }

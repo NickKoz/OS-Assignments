@@ -1,6 +1,6 @@
 #include "Student.h"
 
-
+// Takes a line of student's data and returns a Student object if data is given correctly.
 Student Student_create(char* given_line){
 
     char delim[2] = " ";
