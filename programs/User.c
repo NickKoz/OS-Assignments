@@ -80,6 +80,9 @@ void read_input_file(char* filename){
     // A buffer used for fetching each line of file.
     char buffer_line[string_size];
 
+    // Number of student duplicates that input file may have.
+    int number_of_duplicates = 0;
+
     for(int i = 0 ; i < number_of_students ; i++){
 
         // We fetch each data line of file.
@@ -102,9 +105,13 @@ void read_input_file(char* filename){
         else{
             // Else, we delete student that we created before.
             Student_destroy(S);
-            printf("%dth student already exists!\n", i+1);
+            number_of_duplicates++;
         }
         
+    }
+
+    if(number_of_duplicates){
+        printf("%d duplicated records found and not inserted!\n", number_of_duplicates);
     }
 
     fclose(input_file);

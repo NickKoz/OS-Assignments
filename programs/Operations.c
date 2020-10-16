@@ -118,7 +118,7 @@ void top(char* data){
     }
 
     // Array with references to Students in order to sort them by their gpa.
-    Student students_by_gpa[studs_found];
+    Student* students_by_gpa = malloc(studs_found * sizeof(Student));
 
     LLNode temp = LL_first(studs_bucket);
     for(int i = 0 ; i < studs_found ; i++){
@@ -137,6 +137,8 @@ void top(char* data){
     for(int i = 0 ; i < stud_number ; i++){
         Student_print(students_by_gpa[i]);
     }
+
+    free(students_by_gpa);
 }
 
 
@@ -188,6 +190,7 @@ void minimum(char* data){
 
     LList studs_bucket = InvIndexNode_get_data(studs);
 
+    // A big float in order to initialize minimum gpa.
     float min_gpa = 101.0;
     for(LLNode temp = LL_first(studs_bucket) ; temp != NULL ; temp = LLNode_next(temp)){
         Student S = LLNode_get_data(temp);
@@ -278,7 +281,7 @@ void postal(char* data){
     int number_of_students = HT_count(students);
     
     // Array with pairs of zipcode and number of students that has it.
-    ZipInfo* zip_struct[number_of_students];
+    ZipInfo** zip_struct = malloc(number_of_students * sizeof(ZipInfo*));
     // Initializing the array...
     for(int i = 0 ; i < number_of_students ; i++){
         zip_struct[i] = malloc(sizeof(ZipInfo));
@@ -321,6 +324,7 @@ void postal(char* data){
         for(int i = 0 ; i < number_of_students ; i++){
             free(zip_struct[i]);
         }
+        free(zip_struct);
         return;
     }
 
@@ -359,6 +363,7 @@ void postal(char* data){
     for(int i = 0 ; i < number_of_students ; i++){
         free(zip_struct[i]);
     }
+    free(zip_struct);
 }
 
 
