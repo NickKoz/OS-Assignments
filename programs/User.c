@@ -100,6 +100,8 @@ void read_input_file(char* filename){
             InvIndex_insert(each_year_students, &S->year, SIZE_OF_KEY, S);
         }
         else{
+            // Else, we delete student that we created before.
+            Student_destroy(S);
             printf("%dth student already exists!\n", i+1);
         }
         
