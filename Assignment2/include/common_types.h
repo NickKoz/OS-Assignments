@@ -14,10 +14,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <poll.h>
 
 #define BUFFER_SIZE 256
-
-extern int counter_prime_algor;
 
 
 typedef struct PMessage{

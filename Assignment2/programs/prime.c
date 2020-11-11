@@ -32,14 +32,14 @@ int main(int argc, char *argv[]){
     lb=atoi(argv[1]);
     ub=atoi(argv[2]);
     prime_algor = atoi(argv[3]);
-    char* I_pipe = argv[4];
+    char* W_pipe = argv[4];
 
-    // if ( ( lb<1 )  || ( lb > ub ) ) {
-    //     printf("usage: prime1 lb ub\n");
-    //     exit(1); 
-    // }
-
-    int fd = open(I_pipe, O_WRONLY, 0777);
+    if ( ( lb<1 )  || ( lb > ub ) ) {
+        printf("usage: prime1 %d %d\n", lb, ub);
+        // exit(1); 
+    }
+ 
+    int fd = open(W_pipe, O_WRONLY);
     if(fd == -1){
         printf("Fail open of pipe\n");
         assert(0);
@@ -71,5 +71,4 @@ int main(int argc, char *argv[]){
     write(fd, &total_time, sizeof(double));
 
     close(fd);
-    printf("\n");
 }

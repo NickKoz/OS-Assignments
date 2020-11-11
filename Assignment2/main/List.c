@@ -140,9 +140,7 @@ void LL_insert_last(LList L, LLItem item){
         return;
     }
 
-    temp->data = malloc(sizeof(PMessage));
-    ((PMessage*)temp->data)->prime_number = ((PMessage*)item)->prime_number;
-    ((PMessage*)temp->data)->time_taken = ((PMessage*)item)->time_taken;
+    temp->data = item;
     temp->link = NULL;
 
     if(LL_is_empty(L)){
