@@ -25,8 +25,8 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $@
 
 
-inner_leaves: ./bin/programs/inner_leaves.o
-	gcc $(CFLAGS) ./programs/inner_leaves.c -o ./bin/inner_leaves
+inner_leaves: ./bin/main/List.o ./bin/programs/inner_leaves.o
+	gcc $(CFLAGS) ./programs/inner_leaves.c ./main/List.c -o ./bin/inner_leaves
 
 prime: ./bin/programs/prime.o
 	gcc $(CFLAGS) ./programs/prime.c -o ./bin/prime -lm

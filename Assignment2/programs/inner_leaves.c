@@ -1,24 +1,31 @@
-#include "common_types.h"
+#include "List.h"
+
+
+void destroy_mess(Pointer mess){
+    free(mess);
+}
+
 
 int counter_prime_algor = 1;
 
 int main(int argc, char* argv[]){
     
-    // int status;
     // int rc;
     // struct  pollfd  fdarray [1];
 
     int lb = atoi(argv[1]);
     int ub = atoi(argv[2]);
-    int numOfChildren = atoi(argv[3]);
+    int num_of_children = atoi(argv[3]);
     int numI = atoi(argv[5]);
 
     char bufferlb[BUFFER_SIZE];
     char bufferub[BUFFER_SIZE];
     char bufferPrimeAlgor[BUFFER_SIZE];
+    char bufferRootProcessID[BUFFER_SIZE];
+    int root_process_id = atoi(argv[6]);
     char* bufferPipe = argv[4];
 
-    int d = (int)((ub-lb)/numOfChildren);
+    int d = (int)((ub-lb)/num_of_children);
     if(d == 0){
         d = 1;
     }
@@ -27,9 +34,9 @@ int main(int argc, char* argv[]){
 
     char bufferPipeW[BUFFER_SIZE];
     // Creating children processes for each inner leaf.
-    for(int i = 0 ; i < numOfChildren ; i++){
+    for(int i = 0 ; i < num_of_children ; i++){
 
-        sprintf(bufferPipeW, "bin/W%d", numI*numOfChildren + i);
+        sprintf(bufferPipeW, "bin/W%d", numI*num_of_children + i);
         if(mkfifo(bufferPipeW, 0666) == -1){
             if(errno != EEXIST){
                 printf("Fail mkfifo!\n");
@@ -47,7 +54,8 @@ int main(int argc, char* argv[]){
             sprintf(bufferlb, "%d", templ);
             sprintf(bufferub, "%d", tempu);
             sprintf(bufferPrimeAlgor, "%d", counter_prime_algor);
-            execl("bin/prime", "bin/prime", bufferlb, bufferub, bufferPrimeAlgor, bufferPipeW, (char*)NULL);
+            sprintf(bufferRootProcessID, "%d", root_process_id);
+            execl("bin/prime", "bin/prime", bufferlb, bufferub, bufferPrimeAlgor, bufferPipeW, bufferRootProcessID, (char*)NULL);
         }
         // inner leaf's process
         else{
@@ -60,37 +68,55 @@ int main(int argc, char* argv[]){
             }
 
 
-            write(fd_I, &templ, sizeof(int));
-            write(fd_I, &tempu, sizeof(int));
-
-
-            sprintf(bufferPipeW, "bin/W%d", numI*numOfChildren + i);
+            sprintf(bufferPipeW, "bin/W%d", numI*num_of_children + i);
             int fd_W = open(bufferPipeW, O_RDONLY);
             if(fd_W == -1){
                 printf("Fail open of pipe\n");
                 assert(0);
             }
 
-            // while((wait(&status)) > 0);
             wait(NULL);
-            
-            if(templ > tempu || templ < 1){
-                printf("HEREInner leaves!\n");
-            }
 
+            // Reading and adding each prime that W process found into a list.
+            LList list_of_primes = LL_create(destroy_mess);
+            
             PMessage mess_received;
             for(int j = templ ; j <= tempu ; j++){
+                // Reading prime numbers from worker process.
                 read(fd_W, &mess_received, sizeof(PMessage));
-                write(fd_I, &mess_received, sizeof(PMessage));
+                // We keep primes in a list.
+                if(mess_received.prime_number != NO_PRIME){
+                    PMessage* temp_mess = malloc(sizeof(PMessage));
+                    temp_mess->prime_number = mess_received.prime_number;
+                    temp_mess->time_taken = mess_received.time_taken;
+                    LL_insert_last(list_of_primes, temp_mess);
+                }
             }
+
+            // We sent primes to root by pipe.
+            PMessage mess_to_be_sent;
+            PMessage* temp_data;
+            for(LLNode temp = LL_first(list_of_primes) ; temp != NULL ; temp = LLNode_next(temp)){
+                temp_data = LLNode_get_data(temp);
+                mess_to_be_sent.prime_number = temp_data->prime_number; 
+                mess_to_be_sent.time_taken = temp_data->time_taken; 
+                write(fd_I, &mess_to_be_sent, sizeof(PMessage));
+            }
+            // Sending end value to terminate sending prime numbers to root process. 
+            mess_to_be_sent.prime_number = END_PRIME;
+            write(fd_I, &mess_to_be_sent, sizeof(PMessage));
+
+
             double w_total_time;
 
             read(fd_W, &w_total_time, sizeof(double));
+            // Send W' process time to root.
             write(fd_I, &w_total_time, sizeof(double));
 
             close(fd_W);
             close(fd_I);
 
+            LL_destroy(list_of_primes);
         }
         // We have 3 prime algorithms detectors.
         counter_prime_algor = counter_prime_algor == 3 ? 1  : counter_prime_algor + 1;
@@ -102,7 +128,7 @@ int main(int argc, char* argv[]){
             templ = tempu + 1;
         }
         
-        if((i+1) == numOfChildren - 1 ){
+        if((i+1) == num_of_children - 1 ){
             tempu = ub;
         }
         else{
@@ -114,6 +140,7 @@ int main(int argc, char* argv[]){
             }
         }
     }
-
+    // Sending signal to root process before I process terminates.
+    kill(root_process_id, SIGUSR1);
 }
 
