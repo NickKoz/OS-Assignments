@@ -9,9 +9,6 @@ void destroy_mess(Pointer mess){
 int counter_prime_algor = 1;
 
 int main(int argc, char* argv[]){
-    
-    // int rc;
-    // struct  pollfd  fdarray [1];
 
     int lb = atoi(argv[1]);
     int ub = atoi(argv[2]);
@@ -75,7 +72,7 @@ int main(int argc, char* argv[]){
                 assert(0);
             }
 
-            wait(NULL);
+            wait(NULL); // waits for leaf process to finish.
 
             // Reading and adding each prime that W process found into a list.
             LList list_of_primes = LL_create(destroy_mess);
@@ -118,7 +115,7 @@ int main(int argc, char* argv[]){
 
             LL_destroy(list_of_primes);
         }
-        // We have 3 prime algorithms detectors.
+        // We have 3 prime algorithms.
         counter_prime_algor = counter_prime_algor == 3 ? 1  : counter_prime_algor + 1;
         
         if((templ <= lb) && (i != 0)){

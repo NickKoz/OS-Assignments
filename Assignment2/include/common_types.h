@@ -14,7 +14,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <poll.h>
 #include <signal.h>
 
 #define BUFFER_SIZE 256

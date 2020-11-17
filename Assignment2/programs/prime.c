@@ -10,11 +10,11 @@ int prime(int n, int prime_algor){
             return(NO);
         int limit;
         if(prime_algor == 1)
-            limit = n-1;
+            limit = n-1;    // checking all numbers till n.
         else if(prime_algor == 2)
-            limit = (int)sqrt((float)n);
+            limit = (int)sqrt((float)n);    // checking numbers till sqrt(n).
         else
-            limit = n/2;
+            limit = n/2;    // checking half numbers.
         
         for(i=2 ; i<=limit ; i++)
             if ( n % i == 0) 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
         // We need time to be to msecs. So we multiply secs by 1000.
         time_spent = (double)(end - begin)/ CLOCKS_PER_SEC * 1000.0;
 
-        total_time += time_spent;
+        total_time += time_spent;   // calculate total time of process
 
         PMessage mess;
         if (is_prime == YES){
@@ -56,13 +56,13 @@ int main(int argc, char *argv[]){
             mess.time_taken = time_spent;
         }
         else{
-            // If number is not prime, we return fake value -1.
+            // If number is not prime, we return no prime value.
             mess.prime_number = NO_PRIME;
             mess.time_taken = 0.0;
         }   
-        write(fd, &mess, sizeof(PMessage));
+        write(fd, &mess, sizeof(PMessage)); // we write number to pipe.
     }
-    write(fd, &total_time, sizeof(double));
+    write(fd, &total_time, sizeof(double)); // we write total time to pipe too
 
     close(fd);
     // Sending signal to root process before W process terminates.

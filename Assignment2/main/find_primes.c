@@ -1,5 +1,7 @@
 #include "List.h"
+#include "handler.h"
 
+// Struct that has time for each W process.
 typedef struct Worker{
 
     char W[3];
@@ -13,24 +15,12 @@ void print_worker(Worker w){
 
 
 
-int signals_recieved = 0;
-
-
-void handler(int sig){
-
-    if(sig == SIGUSR1){
-        // printf("Recieved!\n");
-        // fflush(stdout);
-        signals_recieved++;
-    }
-}
-
-
-
 void print_prime(PMessage p){
     printf("(%d,%.5f) ", p.prime_number, p.time_taken);
 }
 
+
+int USR1_signals_recieved = 0;
 
 
 void find_primes(int lb, int ub, int num_of_children){
@@ -42,25 +32,25 @@ void find_primes(int lb, int ub, int num_of_children){
     char bufferI[BUFFER_SIZE];
     char bufferRootProcessID[BUFFER_SIZE];
     sprintf(buffernum, "%d", num_of_children);
-    // struct  pollfd  fdarray [1];
-    // int rc;
+    
+    // Setting sigaction structure in order to handle all recieved signals properly.
     struct sigaction sa = {0};
-    sa.sa_handler = handler;
+    sa.sa_handler = USR1_handler;
     sa.sa_flags = SA_RESTART;
     sigaction(SIGUSR1, &sa, NULL);
-    // signal(SIGUSR1, handler);
+
 
     int num_of_workers = num_of_children*num_of_children;
-    int worker_it = 0;
-    Worker* workers = malloc(num_of_workers*sizeof(Worker));
+    int worker_it = 0;  // worker iterator
+    Worker* workers = malloc(num_of_workers*sizeof(Worker));    // array with workers
 
 
     int d = (int)((ub-lb)/num_of_children);
     if(d == 0){
         d = 1;
     }
-    int templ = lb;
-    int tempu = lb + d;
+    int templ = lb; // low bound 
+    int tempu = lb + d; // upper bound
 
     printf("\nPrimes in [%d,%d] are: ", lb, ub);
     for(int i = 0 ; i < num_of_children ; i++){
@@ -96,7 +86,7 @@ void find_primes(int lb, int ub, int num_of_children){
                 assert(0);
             }
 
-            wait(NULL);
+            wait(NULL); // waits for inner leaf's process to finish.
 
 
             PMessage mess;
@@ -110,7 +100,7 @@ void find_primes(int lb, int ub, int num_of_children){
                     }
                     print_prime(mess);
                 }
-                read(fd, &total_time, sizeof(double));
+                read(fd, &total_time, sizeof(double));  // total time of each W process
 
                 workers[worker_it].time = total_time;
                 sprintf(bufferI, "W%d", i*num_of_children + k);
@@ -141,9 +131,9 @@ void find_primes(int lb, int ub, int num_of_children){
     }
 
     // Finding min,max time of workers' processes.
-    double min_time = 1000.0;
-    double max_time = 0.0;
-    for(int i = 0 ; i < num_of_workers ; i++){
+    double min_time = workers[0].time;
+    double max_time = workers[0].time;
+    for(int i = 1 ; i < num_of_workers ; i++){
         if(workers[i].time < min_time){
             min_time = workers[i].time;
         }
@@ -154,10 +144,12 @@ void find_primes(int lb, int ub, int num_of_children){
     printf("\n\nMin time for workers : %f msecs\n", min_time);
     printf("Max time for workers : %f msecs\n\n", max_time);
 
+    // Printing number of USR1 signals recieved to root from all other processes.
     int num_of_inner_nodes = num_of_children;
     int total_number_of_nodes = num_of_workers + num_of_inner_nodes;
-    printf("Num of USR1 Recieved : %d/%d\n\n", signals_recieved, total_number_of_nodes);
+    printf("Num of USR1 Recieved : %d/%d\n\n", USR1_signals_recieved, total_number_of_nodes);
 
+    // Prints worker and its process time.
     for(int i = 0 ; i < num_of_workers ; i++){
         print_worker(workers[i]);
     }
