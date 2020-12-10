@@ -48,7 +48,6 @@ void chef(int numofSlds, double mantime){
 
         work = select_ingredients();
         shared_memory->workbench = work;
-        // V(&(shared_memory->chef));
 
         
         if(work == TOMATOES_PEPPERS){
@@ -74,11 +73,18 @@ void chef(int numofSlds, double mantime){
         takes_breath(mantime);
         
         if(shared_memory->salads <= 0){
-            V(&(shared_memory->sem_salads));
             break;
         }
 
-        // P(&(shared_memory->chef));
+        P(&(shared_memory->chef));
+    }
+
+    int value = 0;
+    for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
+        sem_getvalue(&(shared_memory->saladmakers[i].sem), &value);
+        if(value <= 0){
+            V(&(shared_memory->saladmakers[i].sem));
+        }
     }
 
 

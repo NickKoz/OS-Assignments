@@ -49,7 +49,6 @@ void SS_initialize(SharedSegment* shared_memory, int numofSlds){
     }
     
     sem_init(&(shared_memory->chef), 1, 0);
-    sem_init(&(shared_memory->sem_salads), 1, 0);
 
 }
 
@@ -75,7 +74,6 @@ int SS_destroy(SharedSegment* shared_memory, int shmid){
         sem_destroy(&(shared_memory->saladmakers[i].sem));
     
     sem_destroy(&(shared_memory->chef));
-    sem_destroy(&(shared_memory->sem_salads));
 
     return 1;
 }

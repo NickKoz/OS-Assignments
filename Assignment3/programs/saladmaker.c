@@ -40,8 +40,6 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
 
     while(shared_memory->salads){
 
-        // P(&(shared_memory->sem_salads));
-
         fp = fopen(filename, "a+");
 
         printf("SALADMAKER %d: Waiting for ingredients...\n", no_sldmker);
@@ -56,11 +54,10 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
         P(&(shared_memory->saladmakers[no_sldmker-1].sem));
         workbench_ingr = shared_memory->workbench;
 
-        curr_time = get_current_time();
-        sprintf(mess, "%s %d Saladmaker%d Getting ingredients\n", 
-                curr_time, getpid(), no_sldmker);
-        free(curr_time);
-        fputs(mess,fp);
+        if(shared_memory->salads <= 0){
+            break;
+        }
+
     
         if(workbench_ingr == TOMATOES_PEPPERS && no_sldmker == 1){
             shared_memory->shared_ingreds.tomatoes--;
@@ -77,6 +74,12 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
             shared_memory->shared_ingreds.peppers--;
             printf("SALADMAKER %d: Recieved 1 onion and 1 pepper.\n", no_sldmker);
         }
+
+        curr_time = get_current_time();
+        sprintf(mess, "%s %d Saladmaker%d Getting ingredients\n", 
+                curr_time, getpid(), no_sldmker);
+        free(curr_time);
+        fputs(mess,fp);
 
         curr_time = get_current_time();
         sprintf(mess, "%s %d Saladmaker%d Start making salad\n", 

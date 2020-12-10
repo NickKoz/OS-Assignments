@@ -34,8 +34,6 @@ typedef struct{
 
     int salads; // Salads that have to be made.
 
-    sem_t sem_salads;
-
     char logfiles[NUM_OF_SALADMAKERS][BUFFER_SIZE];  // 1 log file for each saladmaker
 
     Saladmaker saladmakers[NUM_OF_SALADMAKERS];
