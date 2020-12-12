@@ -1,21 +1,10 @@
 #include "saladmaker.h"
+#include "common.h"
 
 
-char* get_current_time(){
 
-    time_t rawtime;
-    struct tm * timeinfo;
-    char* time_buffer = malloc(BUFFER_SIZE);
-    memset(time_buffer, 0, BUFFER_SIZE);
-
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    
-    sprintf(time_buffer, "%d:%d:%d:%d", timeinfo->tm_mday, timeinfo->tm_hour,
-    timeinfo->tm_min, timeinfo->tm_sec);
-
-    return time_buffer;
-
+static void prepare_salad(int lb, int ub){
+    sleep(ub - lb);
 }
 
 
@@ -31,25 +20,16 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
 
     shared_memory->saladmakers[no_sldmker-1].pid = getpid();
 
-    char* filename = shared_memory->logfiles[no_sldmker-1];
-    FILE* fp;
 
     char mess[BUFFER_SIZE];
-    char* curr_time;
     int workbench_ingr;
 
     while(shared_memory->salads){
 
-        fp = fopen(filename, "a+");
-
         printf("SALADMAKER %d: Waiting for ingredients...\n", no_sldmker);
 
-        curr_time = get_current_time();
-        sprintf(mess, "%s %d Saladmaker%d Waiting for ingredients\n", 
-                curr_time, getpid(), no_sldmker);
-        free(curr_time);
-        fputs(mess,fp);
-
+        sprintf(mess, "Saladmaker%d Waiting ingredients", no_sldmker);
+        write_to_log(mess, no_sldmker, shared_memory);
 
         P(&(shared_memory->saladmakers[no_sldmker-1].sem));
         workbench_ingr = shared_memory->workbench;
@@ -57,6 +37,11 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
         if(shared_memory->salads <= 0){
             break;
         }
+        
+       
+        sprintf(mess, "Saladmaker%d Getting ingredients", no_sldmker);
+        write_to_log(mess, no_sldmker, shared_memory);
+        write_to_log(mess, GLOBAL_LOG, shared_memory);
 
     
         if(workbench_ingr == TOMATOES_PEPPERS && no_sldmker == 1){
@@ -75,27 +60,18 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
             printf("SALADMAKER %d: Recieved 1 onion and 1 pepper.\n", no_sldmker);
         }
 
-        curr_time = get_current_time();
-        sprintf(mess, "%s %d Saladmaker%d Getting ingredients\n", 
-                curr_time, getpid(), no_sldmker);
-        free(curr_time);
-        fputs(mess,fp);
-
-        curr_time = get_current_time();
-        sprintf(mess, "%s %d Saladmaker%d Start making salad\n", 
-                curr_time, getpid(), no_sldmker);
-        free(curr_time);
-        fputs(mess,fp);
+        sprintf(mess, "Saladmaker%d Start making salad", no_sldmker);
+        write_to_log(mess, no_sldmker, shared_memory);
+        write_to_log(mess, GLOBAL_LOG, shared_memory);
 
         printf("SALADMAKER %d: Preparing salad...\n", no_sldmker);
-        sleep(ub - lb);
+        prepare_salad(lb, ub);
         printf("SALADMAKER %d: Salad is ready!\n", no_sldmker);
 
-        curr_time = get_current_time();
-        sprintf(mess, "%s %d Saladmaker%d End making salad\n", 
-                curr_time, getpid(), no_sldmker);
-        free(curr_time);
-        fputs(mess,fp);
+        sprintf(mess, "Saladmaker%d End making salad",  no_sldmker);
+        write_to_log(mess, no_sldmker, shared_memory);
+        write_to_log(mess, GLOBAL_LOG, shared_memory);
+
 
         shared_memory->saladmakers[no_sldmker-1].salads++;
         shared_memory->salads--;
@@ -109,7 +85,6 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
 
         V(&(shared_memory->chef));
 
-        fclose(fp);
     }
 
 

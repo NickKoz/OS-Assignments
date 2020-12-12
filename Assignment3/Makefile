@@ -1,5 +1,6 @@
 #Paths to folders.
-SRC_DIR = ./main
+SRC_DIR_MAIN = ./main
+SRC_DIR_PROGRAMS = ./programs
 INCL_DIR = ./include
 BIN_DIR = ./bin
 
@@ -13,21 +14,26 @@ CFLAGS = -g3 -Wall -I$(INCL_DIR) -lpthread -lrt -pthread
 CHEF = chef
 SALADMAKER = saladmaker
 
-# The source files with C code of the program.
-SOURCES = $(shell find $(SRC_DIR) -name *.c)
+# The source files with C code of the main.
+SOURCES_MAIN = $(shell find $(SRC_DIR_MAIN) -name *.c)
 #The objects needed in order to compile the program:
-OBJECTS = $(patsubst %.c,$(BIN_DIR)/%.o,$(SOURCES))
+OBJECTS_MAIN = $(patsubst %.c,$(BIN_DIR)/%.o,$(SOURCES_MAIN))
+
+# The source files with C code of the program.
+SOURCES_PROGRAMS = $(shell find $(SRC_DIR_PROGRAMS) -name *.c)
+#The objects needed in order to compile the program:
+OBJECTS_PROGRAMS = $(patsubst %.c,$(BIN_DIR)/%.o,$(SOURCES_PROGRAMS))
 
 
 all: $(CHEF) $(SALADMAKER)
 
 
-$(CHEF): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@
+$(CHEF): $(OBJECTS_MAIN)
+	$(CC) $(CFLAGS) $(OBJECTS_MAIN) -o $@ -lm
 
 
-$(SALADMAKER): ./bin/programs/saladmaker.o ./bin/programs/main_saladmaker.o
-	gcc $(CFLAGS) ./programs/saladmaker.c ./programs/main_saladmaker.c ./bin/main/shared_memory.o -o saladmaker
+$(SALADMAKER): $(OBJECTS_PROGRAMS)
+	gcc $(CFLAGS) $(OBJECTS_PROGRAMS) ./bin/main/shared_memory.o ./bin/main/common.o -o $@ -lm
 
 
 bin:

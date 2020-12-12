@@ -1,5 +1,5 @@
 #include "chef.h"
-#include "shared_memory.h"
+#include "common.h"
 
 
 int temp_workbench = -1;
@@ -43,6 +43,8 @@ void chef(int numofSlds, double mantime){
     SS_initialize(shared_memory, numofSlds);
 
     int work;
+    int notified_slmker;
+    char mess[BUFFER_SIZE];
 
     while(shared_memory->salads){
 
@@ -54,20 +56,35 @@ void chef(int numofSlds, double mantime){
             shared_memory->shared_ingreds.tomatoes++;
             shared_memory->shared_ingreds.peppers++;
             printf("CHEF: 1 tomato and 1 pepper are available on workbench.\n");
+            sprintf(mess, "Chef Selecting ingredients ntomata piperia");
+            write_to_log(mess, GLOBAL_LOG, shared_memory);
             V(&(shared_memory->saladmakers[0].sem));
+            notified_slmker = 1;
         }
         else if(work == TOMATOES_ONIONS){
             shared_memory->shared_ingreds.tomatoes++;
             shared_memory->shared_ingreds.onions++;
             printf("CHEF: 1 tomato and 1 onion are available on workbench.\n");
+            sprintf(mess, "Chef Selecting ingredients ntomata kremudi");
+            write_to_log(mess, GLOBAL_LOG, shared_memory);
             V(&(shared_memory->saladmakers[1].sem));
+            notified_slmker = 2;
         }
         else if(work == ONIONS_PEPPERS){
             shared_memory->shared_ingreds.onions++;
             shared_memory->shared_ingreds.peppers++;
             printf("CHEF: 1 onion and 1 pepper are available on workbench.\n");
+            sprintf(mess, "Chef Selecting ingredients kremudi piperia");
+            write_to_log(mess, GLOBAL_LOG, shared_memory);
             V(&(shared_memory->saladmakers[2].sem));
+            notified_slmker = 3;
         }
+
+        sprintf(mess, "Chef Notify saladmaker #%d", notified_slmker);
+        write_to_log(mess, GLOBAL_LOG, shared_memory);
+        
+        sprintf(mess, "Chef Man time for resting");
+        write_to_log(mess, GLOBAL_LOG, shared_memory);
 
         printf("CHEF: Resting...\n");
         takes_breath(mantime);

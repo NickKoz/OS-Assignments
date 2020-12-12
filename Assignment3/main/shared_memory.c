@@ -30,7 +30,7 @@ void SS_initialize(SharedSegment* shared_memory, int numofSlds){
 
     shared_memory->workbench = -1;
 
-    char temp_log[BUFFER_SIZE];
+    char temp_log[BUFFER_SIZE] = {0};
     FILE* temp_fp;
     for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
         sprintf(temp_log, "log%d.txt", i+1);
@@ -42,6 +42,18 @@ void SS_initialize(SharedSegment* shared_memory, int numofSlds){
         }
         fclose(temp_fp);
     }
+
+    // Creating global log file.
+    memset(temp_log, 0, BUFFER_SIZE);
+    sprintf(temp_log, "global_log.txt");
+    strcpy(shared_memory->global_logfile, temp_log);
+    temp_fp = fopen(temp_log, "w"); // create new file or overwrite
+    if(temp_fp == NULL){
+        printf("Error with log file!\n");
+        assert(0);
+    }
+    fclose(temp_fp);
+    
     
     for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
         sem_init(&(shared_memory->saladmakers[i].sem), 1, 0);

@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include <limits.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -20,8 +21,9 @@
 
 #define BUFFER_SIZE 256
 #define NUM_OF_SALADMAKERS 3
+#define GLOBAL_LOG -1
 
-
+#include "shared_memory.h"
 
 
 typedef void* Pointer;
