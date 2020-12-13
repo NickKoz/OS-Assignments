@@ -236,14 +236,14 @@ void LL_visit(LList L, VisitFunc visit){
 
     LLNode temp = L->head;
 	
-	printf("[");
+
 	while(temp != NULL){
 		visit(temp->data);
 		temp = temp->link;
 		if(temp != NULL)
-			printf(",");
+			printf("\n");
 	}
-	printf("]\n");
+	printf("\n");
 
 }
 

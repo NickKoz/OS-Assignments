@@ -60,6 +60,8 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
             printf("SALADMAKER %d: Recieved 1 onion and 1 pepper.\n", no_sldmker);
         }
 
+        V(&(shared_memory->chef));  // Notifies chef that ingredients are recieved.
+
         sprintf(mess, "Saladmaker%d Start making salad", no_sldmker);
         write_to_log(mess, no_sldmker, shared_memory);
         write_to_log(mess, GLOBAL_LOG, shared_memory);
@@ -83,7 +85,6 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
         }
         
 
-        V(&(shared_memory->chef));
 
     }
 
