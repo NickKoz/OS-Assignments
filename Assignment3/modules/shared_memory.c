@@ -24,11 +24,8 @@ SharedSegment* SS_attach(int shmid){
 void SS_initialize(SharedSegment* shared_memory, int numofSlds){    
 
     shared_memory->salads = numofSlds;
-    shared_memory->shared_ingreds.tomatoes = 0;
-    shared_memory->shared_ingreds.onions = 0;
-    shared_memory->shared_ingreds.peppers = 0;
 
-    shared_memory->workbench = -1;
+    shared_memory->workbench_ingredients = EMPTY;
 
     char temp_log[BUFFER_SIZE] = {0};
     FILE* temp_fp;

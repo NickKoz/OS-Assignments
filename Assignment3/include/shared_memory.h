@@ -3,17 +3,13 @@
 
 #include "common_types.h"
 
+#define NUM_OF_SALADMAKERS 3
+#define GLOBAL_LOG -1
+#define EMPTY -1
+
+
 enum ingredients_comb{TOMATOES_PEPPERS, TOMATOES_ONIONS, ONIONS_PEPPERS};
 
-
-typedef struct{
-
-    // Ingredients on workbench.
-    int tomatoes;
-    int peppers;
-    int onions;
-
-}SharedIngredients;
 
 
 typedef struct{
@@ -28,9 +24,7 @@ typedef struct{
 
 typedef struct{
 
-    SharedIngredients shared_ingreds;
-
-    int workbench;
+    int workbench_ingredients;
 
     int salads; // Salads that have to be made.
 

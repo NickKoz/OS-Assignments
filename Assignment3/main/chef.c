@@ -153,64 +153,58 @@ void chef(int numofSlds, double mantime){
 
     printf("CHEF: Shared Memory ID is %d\n", shmid);
 
-    SharedSegment* shared_memory = SS_attach(shmid);
-    if(shared_memory == NULL){
+    SharedSegment* shared_resources = SS_attach(shmid);
+    if(shared_resources == NULL){
         assert(0);
         return;
     }
 
-    SS_initialize(shared_memory, numofSlds);
+    SS_initialize(shared_resources, numofSlds);
 
     int work;
     int notified_slmker;
     char mess[BUFFER_SIZE];
 
-    while(shared_memory->salads){
+    while(shared_resources->salads){
 
         work = select_ingredients();
-        shared_memory->workbench = work;
+        shared_resources->workbench_ingredients = work;
 
         
         if(work == TOMATOES_PEPPERS){
-            shared_memory->shared_ingreds.tomatoes++;
-            shared_memory->shared_ingreds.peppers++;
             printf("CHEF: 1 tomato and 1 pepper are available on workbench.\n");
             sprintf(mess, "Chef Selecting ingredients ntomata piperia");
-            write_to_log(mess, GLOBAL_LOG, shared_memory);
-            V(&(shared_memory->saladmakers[0].sem));
+            write_to_log(mess, GLOBAL_LOG, shared_resources);
+            V(&(shared_resources->saladmakers[0].sem));
             notified_slmker = 1;
         }
         else if(work == TOMATOES_ONIONS){
-            shared_memory->shared_ingreds.tomatoes++;
-            shared_memory->shared_ingreds.onions++;
             printf("CHEF: 1 tomato and 1 onion are available on workbench.\n");
             sprintf(mess, "Chef Selecting ingredients ntomata kremudi");
-            write_to_log(mess, GLOBAL_LOG, shared_memory);
-            V(&(shared_memory->saladmakers[1].sem));
+            write_to_log(mess, GLOBAL_LOG, shared_resources);
+            V(&(shared_resources->saladmakers[1].sem));
             notified_slmker = 2;
         }
         else if(work == ONIONS_PEPPERS){
-            shared_memory->shared_ingreds.onions++;
-            shared_memory->shared_ingreds.peppers++;
             printf("CHEF: 1 onion and 1 pepper are available on workbench.\n");
             sprintf(mess, "Chef Selecting ingredients kremudi piperia");
-            write_to_log(mess, GLOBAL_LOG, shared_memory);
-            V(&(shared_memory->saladmakers[2].sem));
+            write_to_log(mess, GLOBAL_LOG, shared_resources);
+            V(&(shared_resources->saladmakers[2].sem));
             notified_slmker = 3;
         }
 
         sprintf(mess, "Chef Notify saladmaker #%d", notified_slmker);
-        write_to_log(mess, GLOBAL_LOG, shared_memory);
+        write_to_log(mess, GLOBAL_LOG, shared_resources);
 
-        P(&(shared_memory->chef));  // Waits for saladmaker to recieve ingredients
+        P(&(shared_resources->chef));  // Waits for saladmaker to recieve ingredients
 
         sprintf(mess, "Chef Man time for resting");
-        write_to_log(mess, GLOBAL_LOG, shared_memory);
+        write_to_log(mess, GLOBAL_LOG, shared_resources);
 
         printf("CHEF: Resting...\n");
         takes_breath(mantime);
         
-        if(shared_memory->salads <= 0){
+        if(shared_resources->salads <= 0){
             printf("CHEF: We have enough salads.\n");
             break;
         }
@@ -220,42 +214,42 @@ void chef(int numofSlds, double mantime){
     // Wake up any saladmaker that is waiting for ingredients.
     int value = 0;
     for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
-        sem_getvalue(&(shared_memory->saladmakers[i].sem), &value);
+        sem_getvalue(&(shared_resources->saladmakers[i].sem), &value);
         if(value <= 0){
-            V(&(shared_memory->saladmakers[i].sem));
+            V(&(shared_resources->saladmakers[i].sem));
         }
     }
 
 
 
 
-    if(shared_memory->salads < 0){
-        shared_memory->salads *= -1;
+    if(shared_resources->salads < 0){
+        shared_resources->salads *= -1;
     }
 
-    printf("\nTotal #salads: %d\n\n", shared_memory->salads + numofSlds);
+    printf("\nTotal #salads: %d\n\n", shared_resources->salads + numofSlds);
     pid_t pid;
     int salads;
     for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
-        pid = shared_memory->saladmakers[i].pid;
-        salads = shared_memory->saladmakers[i].salads;
+        pid = shared_resources->saladmakers[i].pid;
+        salads = shared_resources->saladmakers[i].salads;
         printf("#salads of salad_maker%d %d : %d\n", i+1, pid, salads);
     }
 
     
-    LList conc_processes = get_concurrent_processes(shared_memory->global_logfile);
+    LList conc_processes = get_concurrent_processes(shared_resources->global_logfile);
 
     LL_visit(conc_processes, visit_tperiod);
 
     LL_destroy(conc_processes);
 
 
-    if(SS_detach(shared_memory) < 0){
+    if(SS_detach(shared_resources) < 0){
         assert(0);
         return;
     }
 
-    if(SS_destroy(shared_memory, shmid) < 0){
+    if(SS_destroy(shared_resources, shmid) < 0){
         assert(0);
         return;
     }

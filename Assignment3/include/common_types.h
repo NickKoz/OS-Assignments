@@ -20,8 +20,6 @@
 #include <signal.h>
 
 #define BUFFER_SIZE 256
-#define NUM_OF_SALADMAKERS 3
-#define GLOBAL_LOG -1
 
 #include "shared_memory.h"
 
