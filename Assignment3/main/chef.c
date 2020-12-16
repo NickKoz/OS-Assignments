@@ -66,7 +66,7 @@ void visit_tperiod(LLItem pointer){
 }
 
 
-
+// Returns list with time periods in which 2 or more processes run concurrently.
 static LList get_concurrent_processes(char* global_log){
 
     FILE* fp = fopen(global_log, "r");
@@ -109,6 +109,8 @@ static LList get_concurrent_processes(char* global_log){
         // Extracting saladmaker's number.
         no_sldmker = process_name[10] - '0';
 
+        // Extracting info about concurrent processes.
+
         if(!strcmp(message, "Getting")){
             concurrent_proc++;
             if(prev_sldmaker == -1){
@@ -130,7 +132,13 @@ static LList get_concurrent_processes(char* global_log){
                 concurrent_proc = 0;
                 prev_sldmaker = -1;
             }
-
+            else if(prev_sldmaker == no_sldmker && concurrent_proc == 1){
+                concurrent_proc = 0;
+                prev_sldmaker = -1;
+            }
+            else if(prev_sldmaker != no_sldmker){
+                concurrent_proc++;
+            }
         }
 
     }
@@ -149,6 +157,7 @@ void chef(int numofSlds, double mantime){
         assert(0);
         return;
     }
+    
     srand(time(NULL));
 
     printf("CHEF: Shared Memory ID is %d\n", shmid);
@@ -170,7 +179,8 @@ void chef(int numofSlds, double mantime){
         work = select_ingredients();
         shared_resources->workbench_ingredients = work;
 
-        
+        // Notifies appropriate saladmaker.
+
         if(work == TOMATOES_PEPPERS){
             printf("CHEF: 1 tomato and 1 pepper are available on workbench.\n");
             sprintf(mess, "Chef Selecting ingredients ntomata piperia");
@@ -211,7 +221,7 @@ void chef(int numofSlds, double mantime){
 
     }
 
-    // Wake up any saladmaker that is waiting for ingredients.
+    // Wake up any saladmaker that are waiting for ingredients.
     int value = 0;
     for(int i = 0 ; i < NUM_OF_SALADMAKERS ; i++){
         sem_getvalue(&(shared_resources->saladmakers[i].sem), &value);
@@ -221,7 +231,7 @@ void chef(int numofSlds, double mantime){
     }
 
 
-
+    // Prints results.
 
     if(shared_resources->salads < 0){
         shared_resources->salads *= -1;
@@ -236,6 +246,7 @@ void chef(int numofSlds, double mantime){
         printf("#salads of salad_maker%d %d : %d\n", i+1, pid, salads);
     }
 
+    printf("\nTime periods with concurrent processes are: \n");
     
     LList conc_processes = get_concurrent_processes(shared_resources->global_logfile);
 
@@ -244,11 +255,13 @@ void chef(int numofSlds, double mantime){
     LL_destroy(conc_processes);
 
 
+    // Detach shared memory.
     if(SS_detach(shared_resources) < 0){
         assert(0);
         return;
     }
 
+    // Free shared memory.
     if(SS_destroy(shared_resources, shmid) < 0){
         assert(0);
         return;

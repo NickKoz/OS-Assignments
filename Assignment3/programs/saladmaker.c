@@ -74,16 +74,19 @@ void saladmaker(int lb, int ub, int shmid, int no_sldmker){
         printf("Remaining salads: %d\n", shared_resources->salads);
 
         if(shared_resources->salads <= 0){
-            V(&(shared_resources->chef));
+            // If chef is waiting, saladmaker wakes him up.
+            int value = 0;
+            sem_getvalue(&(shared_resources->chef), &value);
+            if(value <= 0){
+                V(&(shared_resources->chef));
+            }
             break;
         }
-        
-
 
     }
 
 
-
+    // Detach shared memory.
     if(SS_detach(shared_resources) < 0){
         assert(0);
         return;

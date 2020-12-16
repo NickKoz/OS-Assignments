@@ -8,6 +8,7 @@
 #define EMPTY -1
 
 
+// Ingredients that chef can choose from their baskets.
 enum ingredients_comb{TOMATOES_PEPPERS, TOMATOES_ONIONS, ONIONS_PEPPERS};
 
 
