@@ -44,7 +44,17 @@ int main(int argc, char* argv[]){
 
     quic(origindir, destdir);
 
-    printf("BYTES: %d\n", bytes_copied);
-    printf("Time: %.6f\n", seconds_for_copy);
+
+    double bytes_pace;
+    if(seconds_for_copy == 0.0){
+        bytes_pace = 0.0;
+    }
+    else{
+        bytes_pace = bytes_copied / seconds_for_copy;
+    }
+
+    printf("There are %d files/directories in the hierarchy\n", entities);
+    printf("Number of entities copied is %d\n", entities_copied);
+    printf("Copied %d bytes in %.6f sec at %.6f bytes/sec\n", bytes_copied, seconds_for_copy, bytes_pace);
 
 }

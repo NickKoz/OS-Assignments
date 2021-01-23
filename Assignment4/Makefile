@@ -46,7 +46,6 @@ $(BIN_DIR)/%.o : %.c
 clean :
 	@rm -rf $(BIN_DIR)
 	@rm $(QUIC)
-	@rm -rf test2
 
 run : $(QUIC)
 	./$(QUIC) $(ARGS)

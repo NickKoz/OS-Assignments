@@ -23,6 +23,8 @@ void make_dir(char* origin, char* dest){
         printf("Created directory %s\n", dest);
     }
 
+    entities_copied++;
+
 }
 
 bool file_exists(char* filename){
@@ -74,6 +76,7 @@ static void copy_file(char* dest, char* src){
         seconds_for_copy += (double)(end-begin) / CLOCKS_PER_SEC;
     }
 
+    entities_copied++;
 
     close(fd_src);
     close(fd_dest);
@@ -81,9 +84,144 @@ static void copy_file(char* dest, char* src){
 }
 
 
+bool check_if_dir_empty(char* direct){
+    
+    DIR* dir_ptr = opendir(direct);
+
+    struct dirent* dir_buffer;
+
+    int n = 0;
+
+    while((dir_buffer = readdir(dir_ptr)) != NULL){
+        if(++n > 2){
+            return false;
+        }
+    }
+
+    return true;
+}
 
 
-void quic(char* origindir, char* destdir){
+void cleanup_directory(char* direct){
+
+    DIR* dir_ptr = opendir(direct);
+    if(check_if_dir_empty(direct)){
+        printf("KILL DIR %s\n", direct);
+        // rmdir(path);
+    }
+
+    char path[BUFFER_SIZE*2] = {0};
+
+    struct dirent* dir_buffer;
+
+    while((dir_buffer = readdir(dir_ptr)) != NULL){
+
+        memset(path, 0, BUFFER_SIZE*2);
+        sprintf(path, "%s/%s", direct, dir_buffer->d_name);
+
+        if(check_if_dir(path)){
+            if(strcmp(dir_buffer->d_name, ".") && strcmp(dir_buffer->d_name, "..")){
+                // if(check_if_dir_empty(path)){
+                //     printf("KILL DIR %s\n", dir_buffer->d_name);
+                //     // rmdir(path);
+                // }
+                cleanup_directory(path);
+            }
+        }
+        else{
+            printf("TARGET2: %s\n", path);
+            unlink(path);
+        }
+    }
+
+    if(check_if_dir_empty(direct)){
+            printf("KILL DIR %s\n", direct);
+            rmdir(direct);
+    }
+
+    closedir(dir_ptr);
+
+}
+
+
+
+int cleanup_dest(char* origindir, char* destdir){
+
+    DIR* dp_dest = opendir(destdir);
+    DIR* dp_origin = opendir(origindir);
+
+    char buffer_path_src[BUFFER_SIZE*2] = {0};
+    char buffer_path_dest[BUFFER_SIZE*2] = {0};
+
+    struct dirent* origin_buffer, *dest_buffer;
+
+    bool found;
+    int returned;
+
+    while(true){
+        // Reading destination directory.
+        dest_buffer = readdir(dp_dest);
+
+        if(dest_buffer == NULL){
+            break;
+        }
+        memset(buffer_path_dest, 0, BUFFER_SIZE*2);
+        sprintf(buffer_path_dest, "%s/%s",destdir, dest_buffer->d_name);
+
+        if(check_if_dir(buffer_path_dest)){
+            if(strcmp(dest_buffer->d_name, ".") && strcmp(dest_buffer->d_name, "..")){
+                printf("%s\n", dest_buffer->d_name);
+
+                memset(buffer_path_src, 0, BUFFER_SIZE*2);
+                sprintf(buffer_path_src, "%s/%s", origindir, dest_buffer->d_name);
+                returned = cleanup_dest(buffer_path_src, buffer_path_dest);
+                if(returned == -1){
+                    cleanup_directory(buffer_path_dest);
+                }
+            }
+            // continue;
+        }
+        
+
+        found = false;
+
+        dp_origin = opendir(origindir);
+        if(dp_origin == NULL){
+            printf("DUMP\n");
+            return -1;
+        }
+
+        while((origin_buffer = readdir(dp_origin)) != NULL){
+
+            memset(buffer_path_src, 0, BUFFER_SIZE*2);
+            sprintf(buffer_path_src, "%s/%s", origindir, origin_buffer->d_name);
+            
+            if(check_if_dir(buffer_path_src)){
+                continue;
+            }
+            if(!strcmp(origin_buffer->d_name, dest_buffer->d_name)){
+                found = true;
+                break;
+            }
+
+        }
+
+        if(!found && !check_if_dir(buffer_path_dest)){
+            printf("TARGET: %s\n", dest_buffer->d_name);
+            unlink(buffer_path_dest);
+        }
+
+    }
+
+    closedir(dp_origin);
+    closedir(dp_dest);
+    return 0;
+}
+
+
+
+
+static void aux_quic(char* origindir, char* destdir){
 
     DIR* dp_dest = opendir(destdir);
 
@@ -100,33 +238,26 @@ void quic(char* origindir, char* destdir){
 
     struct dirent* origin_buffer, *dest_buffer = NULL;
 
-    while(true){
-        origin_buffer = readdir(dp_origin);
-            
-        if(origin_buffer == NULL){
-            break;
-        }
+    while((origin_buffer = readdir(dp_origin)) != NULL){
 
         if(dest_buffer != NULL){
             dest_buffer = readdir(dp_dest);
         }
 
-
-        // printf("%d\n",origin_buffer->d_type);
-
-        memset(buffer_path_src, 0, BUFFER_SIZE);
-        memset(buffer_path_dest, 0, BUFFER_SIZE);
+        memset(buffer_path_src, 0, BUFFER_SIZE*2);
+        memset(buffer_path_dest, 0, BUFFER_SIZE*2);
 
         sprintf(buffer_path_src, "%s/%s",origindir, origin_buffer->d_name);
         sprintf(buffer_path_dest, "%s/%s",destdir, origin_buffer->d_name);
 
         if(strcmp(origin_buffer->d_name, ".") && strcmp(origin_buffer->d_name, "..")){
             printf("%s\n", buffer_path_src);
+            entities++;
         }
 
-        if(origin_buffer->d_type == DT_DIR){
+        // if(origin_buffer->d_type == DT_DIR){
+        if(check_if_dir(buffer_path_src)){
             if(strcmp(origin_buffer->d_name, ".") && strcmp(origin_buffer->d_name, "..")){
-                // printf("%s\n", buffer_path_src);
                 quic(buffer_path_src, buffer_path_dest);
             }
         }
@@ -149,6 +280,17 @@ void quic(char* origindir, char* destdir){
 
     closedir(dp_origin);
     closedir(dp_dest);
+
+}
+
+
+
+
+void quic(char* origindir, char* destdir){
+
+    aux_quic(origindir, destdir);
+
+    cleanup_dest(origindir, destdir);
 
 }
 

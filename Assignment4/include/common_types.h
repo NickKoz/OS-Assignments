@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 
 #define BUFFER_SIZE 256
 
