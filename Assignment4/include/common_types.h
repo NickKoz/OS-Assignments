@@ -19,7 +19,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 512
 
 #include "common.h"
 

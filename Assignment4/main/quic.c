@@ -121,13 +121,13 @@ void cleanup_directory(char* direct){
 
     DIR* dir_ptr = opendir(direct);
 
-    char path[BUFFER_SIZE*2] = {0};
+    char path[BUFFER_SIZE] = {0};
 
     struct dirent* dir_buffer;
 
     while((dir_buffer = readdir(dir_ptr)) != NULL){
 
-        memset(path, 0, BUFFER_SIZE*2);
+        memset(path, 0, BUFFER_SIZE);
         sprintf(path, "%s/%s", direct, dir_buffer->d_name);
 
         // If current path is directory, we dive into it with recursive call.
@@ -164,8 +164,8 @@ static int cleanup_dest(char* origindir, char* destdir){
     DIR* dp_dest = opendir(destdir);
     DIR* dp_origin = opendir(origindir);
 
-    char buffer_path_src[BUFFER_SIZE*2] = {0};
-    char buffer_path_dest[BUFFER_SIZE*2] = {0};
+    char buffer_path_src[BUFFER_SIZE] = {0};
+    char buffer_path_dest[BUFFER_SIZE] = {0};
 
     struct dirent* origin_buffer, *dest_buffer;
 
@@ -175,14 +175,14 @@ static int cleanup_dest(char* origindir, char* destdir){
     // Iterating destination directory.
     while((dest_buffer = readdir(dp_dest)) != NULL){
 
-        memset(buffer_path_dest, 0, BUFFER_SIZE*2);
+        memset(buffer_path_dest, 0, BUFFER_SIZE);
         sprintf(buffer_path_dest, "%s/%s",destdir, dest_buffer->d_name);
 
         // If current item is directory, does a recursive call for it.
         if(check_if_dir(buffer_path_dest)){
             if(strcmp(dest_buffer->d_name, ".") && strcmp(dest_buffer->d_name, "..")){
 
-                memset(buffer_path_src, 0, BUFFER_SIZE*2);
+                memset(buffer_path_src, 0, BUFFER_SIZE);
                 sprintf(buffer_path_src, "%s/%s", origindir, dest_buffer->d_name);
                 // Recursive call for inner directory.
                 returned = cleanup_dest(buffer_path_src, buffer_path_dest);
@@ -206,7 +206,7 @@ static int cleanup_dest(char* origindir, char* destdir){
 
         while((origin_buffer = readdir(dp_origin)) != NULL){
 
-            memset(buffer_path_src, 0, BUFFER_SIZE*2);
+            memset(buffer_path_src, 0, BUFFER_SIZE);
             sprintf(buffer_path_src, "%s/%s", origindir, origin_buffer->d_name);
             
             if(check_if_dir(buffer_path_src)){
@@ -249,9 +249,9 @@ static void aux_quic(char* origindir, char* destdir){
     DIR* dp_origin = opendir(origindir);
 
 
-    char buffer_path_src[BUFFER_SIZE*2] = {0};
-    char buffer_path_dest[BUFFER_SIZE*2] = {0};
-    char link_content[BUFFER_SIZE*2] = {0};
+    char buffer_path_src[BUFFER_SIZE] = {0};
+    char buffer_path_dest[BUFFER_SIZE] = {0};
+    char link_content[BUFFER_SIZE] = {0};
 
     struct dirent* origin_buffer, *dest_buffer = NULL;
     
@@ -263,8 +263,8 @@ static void aux_quic(char* origindir, char* destdir){
             dest_buffer = readdir(dp_dest);
         }
 
-        memset(buffer_path_src, 0, BUFFER_SIZE*2);
-        memset(buffer_path_dest, 0, BUFFER_SIZE*2);
+        memset(buffer_path_src, 0, BUFFER_SIZE);
+        memset(buffer_path_dest, 0, BUFFER_SIZE);
 
         sprintf(buffer_path_src, "%s/%s",origindir, origin_buffer->d_name);
         sprintf(buffer_path_dest, "%s/%s",destdir, origin_buffer->d_name);
@@ -275,7 +275,7 @@ static void aux_quic(char* origindir, char* destdir){
             entities++;
         }
 
-        memset(link_content, 0, BUFFER_SIZE*2);
+        memset(link_content, 0, BUFFER_SIZE);
 
         // If current item is directory, we enter it with a recursive call. 
         if(check_if_dir(buffer_path_src)){
@@ -285,7 +285,7 @@ static void aux_quic(char* origindir, char* destdir){
         }
         // If current item is symbolic link, we create a new one
         else if(links && check_if_link(buffer_path_src)){
-            readlink(buffer_path_src, link_content, BUFFER_SIZE*2);
+            readlink(buffer_path_src, link_content, BUFFER_SIZE);
             // for linking the source file.
             symlink(link_content, buffer_path_dest);
         }
