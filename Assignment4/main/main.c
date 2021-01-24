@@ -37,8 +37,11 @@ int main(int argc, char* argv[]){
 
     // If origin dir does not exist, program ends.
     if(!check_if_dir(origindir)){
-        printf("Origin dir is not valid!\n");
+        printf("Source directory is not valid!\n");
         return 1;
+    }
+    else{
+        printf("%s\n", origindir);
     }
 
 
@@ -53,7 +56,7 @@ int main(int argc, char* argv[]){
         bytes_pace = bytes_copied / seconds_for_copy;
     }
 
-    printf("There are %d files/directories in the hierarchy\n", entities);
+    printf("\nThere are %d files/directories in the hierarchy\n", entities);
     printf("Number of entities copied is %d\n", entities_copied);
     printf("Copied %d bytes in %.6f sec at %.6f bytes/sec\n", bytes_copied, seconds_for_copy, bytes_pace);
 

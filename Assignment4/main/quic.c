@@ -23,10 +23,18 @@ void make_dir(char* origin, char* dest){
         printf("Created directory %s\n", dest);
     }
 
-    entities_copied++;
-
 }
 
+// Checks if file is symbolic link.
+bool check_if_link(char* filename){
+
+    struct stat stat_buffer = {0};
+    lstat(filename, &stat_buffer);   
+
+    return S_ISLNK(stat_buffer.st_mode);
+}
+
+// Checks if file exists.
 bool file_exists(char* filename){
 
     struct stat buffer_stat;
@@ -35,6 +43,7 @@ bool file_exists(char* filename){
 }
 
 
+// Checks if the 2 files are same.
 bool files_same(char* file1, char* file2){
 
     struct stat buffer1, buffer2;
@@ -50,7 +59,7 @@ bool files_same(char* file1, char* file2){
 
 }
 
-
+// Copies src to dest.
 static void copy_file(char* dest, char* src){
 
     int fd_src = open(src, O_RDONLY);
@@ -78,12 +87,17 @@ static void copy_file(char* dest, char* src){
 
     entities_copied++;
 
+    if(verbose){
+        printf("File %s copied!\n", dest);
+    }
+
     close(fd_src);
     close(fd_dest);
 
 }
 
 
+// Checks if directory is empty.
 bool check_if_dir_empty(char* direct){
     
     DIR* dir_ptr = opendir(direct);
@@ -102,13 +116,10 @@ bool check_if_dir_empty(char* direct){
 }
 
 
+// Cleans up given directory, deletes all its contents. 
 void cleanup_directory(char* direct){
 
     DIR* dir_ptr = opendir(direct);
-    if(check_if_dir_empty(direct)){
-        printf("KILL DIR %s\n", direct);
-        // rmdir(path);
-    }
 
     char path[BUFFER_SIZE*2] = {0};
 
@@ -119,24 +130,26 @@ void cleanup_directory(char* direct){
         memset(path, 0, BUFFER_SIZE*2);
         sprintf(path, "%s/%s", direct, dir_buffer->d_name);
 
+        // If current path is directory, we dive into it with recursive call.
         if(check_if_dir(path)){
             if(strcmp(dir_buffer->d_name, ".") && strcmp(dir_buffer->d_name, "..")){
-                // if(check_if_dir_empty(path)){
-                //     printf("KILL DIR %s\n", dir_buffer->d_name);
-                //     // rmdir(path);
-                // }
                 cleanup_directory(path);
             }
         }
         else{
-            printf("TARGET2: %s\n", path);
             unlink(path);
+            if(verbose){
+                printf("File %s is deleted!\n", path);
+            }
         }
     }
 
+    // If current directory is empty, we remove it.
     if(check_if_dir_empty(direct)){
-            printf("KILL DIR %s\n", direct);
-            rmdir(direct);
+        rmdir(direct);
+        if(verbose){
+                printf("Directory %s is deleted!\n", direct);
+            }
     }
 
     closedir(dir_ptr);
@@ -144,8 +157,9 @@ void cleanup_directory(char* direct){
 }
 
 
-
-int cleanup_dest(char* origindir, char* destdir){
+// Cleanups destination directory from files/folders that are not in source 
+// directory anymore.
+static int cleanup_dest(char* origindir, char* destdir){
 
     DIR* dp_dest = opendir(destdir);
     DIR* dp_origin = opendir(origindir);
@@ -158,36 +172,35 @@ int cleanup_dest(char* origindir, char* destdir){
     bool found;
     int returned;
 
-    while(true){
-        // Reading destination directory.
-        dest_buffer = readdir(dp_dest);
+    // Iterating destination directory.
+    while((dest_buffer = readdir(dp_dest)) != NULL){
 
-        if(dest_buffer == NULL){
-            break;
-        }
         memset(buffer_path_dest, 0, BUFFER_SIZE*2);
         sprintf(buffer_path_dest, "%s/%s",destdir, dest_buffer->d_name);
 
+        // If current item is directory, does a recursive call for it.
         if(check_if_dir(buffer_path_dest)){
             if(strcmp(dest_buffer->d_name, ".") && strcmp(dest_buffer->d_name, "..")){
-                printf("%s\n", dest_buffer->d_name);
 
                 memset(buffer_path_src, 0, BUFFER_SIZE*2);
                 sprintf(buffer_path_src, "%s/%s", origindir, dest_buffer->d_name);
+                // Recursive call for inner directory.
                 returned = cleanup_dest(buffer_path_src, buffer_path_dest);
+                // If it returns -1, source directory is empty so we should clean
+                // destination directory.
                 if(returned == -1){
                     cleanup_directory(buffer_path_dest);
                 }
             }
-            // continue;
         }
         
+        // If current item is a regular file, we should search source directory
+        // for it.
 
         found = false;
 
         dp_origin = opendir(origindir);
         if(dp_origin == NULL){
-            printf("DUMP\n");
             return -1;
         }
 
@@ -206,9 +219,12 @@ int cleanup_dest(char* origindir, char* destdir){
 
         }
 
+        // If we find the item, we delete it.
         if(!found && !check_if_dir(buffer_path_dest)){
-            printf("TARGET: %s\n", dest_buffer->d_name);
             unlink(buffer_path_dest);
+            if(verbose){
+                printf("File %s is deleted!\n", buffer_path_dest);
+            }
         }
 
     }
@@ -220,7 +236,7 @@ int cleanup_dest(char* origindir, char* destdir){
 
 
 
-
+// Recursive auxilliary function for quic program.
 static void aux_quic(char* origindir, char* destdir){
 
     DIR* dp_dest = opendir(destdir);
@@ -235,11 +251,14 @@ static void aux_quic(char* origindir, char* destdir){
 
     char buffer_path_src[BUFFER_SIZE*2] = {0};
     char buffer_path_dest[BUFFER_SIZE*2] = {0};
+    char link_content[BUFFER_SIZE*2] = {0};
 
     struct dirent* origin_buffer, *dest_buffer = NULL;
-
+    
+    // Iterating source directory's contents
     while((origin_buffer = readdir(dp_origin)) != NULL){
 
+        // and destination's.
         if(dest_buffer != NULL){
             dest_buffer = readdir(dp_dest);
         }
@@ -250,28 +269,34 @@ static void aux_quic(char* origindir, char* destdir){
         sprintf(buffer_path_src, "%s/%s",origindir, origin_buffer->d_name);
         sprintf(buffer_path_dest, "%s/%s",destdir, origin_buffer->d_name);
 
+        // Printing each path.
         if(strcmp(origin_buffer->d_name, ".") && strcmp(origin_buffer->d_name, "..")){
             printf("%s\n", buffer_path_src);
             entities++;
         }
 
-        // if(origin_buffer->d_type == DT_DIR){
+        memset(link_content, 0, BUFFER_SIZE*2);
+
+        // If current item is directory, we enter it with a recursive call. 
         if(check_if_dir(buffer_path_src)){
             if(strcmp(origin_buffer->d_name, ".") && strcmp(origin_buffer->d_name, "..")){
                 quic(buffer_path_src, buffer_path_dest);
             }
         }
+        // If current item is symbolic link, we create a new one
+        else if(links && check_if_link(buffer_path_src)){
+            readlink(buffer_path_src, link_content, BUFFER_SIZE*2);
+            // for linking the source file.
+            symlink(link_content, buffer_path_dest);
+        }
         else{
             if(!file_exists(buffer_path_dest)){
                 copy_file(buffer_path_dest, buffer_path_src);
-                printf("1)\n");
             }
             else if(file_exists(buffer_path_dest) && !files_same(buffer_path_src, buffer_path_dest)){
                 copy_file(buffer_path_dest, buffer_path_src);
-                printf("2)\n");
             }
             else if(file_exists(buffer_path_dest) && files_same(buffer_path_src, buffer_path_dest)){
-                printf("3)\n");
                 continue;
             }
         }
@@ -285,12 +310,15 @@ static void aux_quic(char* origindir, char* destdir){
 
 
 
-
+// Main function for quic program.
 void quic(char* origindir, char* destdir){
 
     aux_quic(origindir, destdir);
 
-    cleanup_dest(origindir, destdir);
+    // If -d flag is added, we cleanup destination directory.
+    if(deleted){
+        cleanup_dest(origindir, destdir);
+    }
 
 }
 
