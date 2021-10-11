@@ -10,7 +10,7 @@ CC = gcc
 #The compiler options:
 CFLAGS = -g3 -Wall -I$(INCL_DIR)
 
-#The final executable files:
+#The final executable file:
 QUIC = quic
 
 # The source files with C code of the main.

@@ -26,7 +26,6 @@
 
 void quic(char*, char*);
 bool check_if_dir(char*);
-void make_dir(char*, char*);
 
 
 typedef void* Pointer;
